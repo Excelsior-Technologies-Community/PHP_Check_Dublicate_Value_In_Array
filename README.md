@@ -1,4 +1,4 @@
-# Array Duplicate Checker in PHP
+# PHP_Check_Dublicate_Value_In_Array
 
 A simple and clean PHP project that demonstrates how to check whether an array contains duplicate values using multiple approaches. This repository is intended for beginners, interviews, exams, and real-world PHP usage.
 
