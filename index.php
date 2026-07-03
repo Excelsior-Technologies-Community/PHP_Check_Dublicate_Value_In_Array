@@ -53,11 +53,33 @@
         $array = [];
 
         if (isset($_POST['check'])) {
-            $input = trim($_POST['array']);
 
             $search = trim($_POST['search']);
 
-            $array = array_filter(array_map('trim', explode(',', $input)));
+            // CASE 1: If file uploaded
+            if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] == 0) {
+
+                $file = $_FILES['csv_file']['tmp_name'];
+                $content = file_get_contents($file);
+
+                $input = $content;
+
+                $array = array_filter(array_map('trim', explode(',', $content)));
+            }
+            // CASE 2: Manual input
+            else {
+
+                $input = trim($_POST['array']);
+
+                $array = array_filter(array_map('trim', explode(',', $input)));
+            }
+
+            // NEW FEATURE: remove duplicates toggle
+            $removeDuplicates = isset($_POST['remove_duplicates']);
+
+            if ($removeDuplicates) {
+                $array = array_values(array_unique($array));
+            }
         }
 
         function hasDuplicates($array)
@@ -119,12 +141,18 @@
             return totalElements($array) - uniqueElements($array);
         }
 
+        function duplicatePercentage($array)
+        {
+            if (count($array) == 0) return 0;
+            return round((duplicateCount($array) / count($array)) * 100, 2);
+        }
+
         ?>
 
         <div class="card shadow mb-4">
             <div class="card-body">
 
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">
@@ -148,6 +176,27 @@
                         <input type="text" class="form-control" name="search"
                             value="<?php echo htmlspecialchars($search); ?>" placeholder="Example: Apple">
 
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            Upload CSV File
+                        </label>
+
+                        <input type="file" name="csv_file" class="form-control" accept=".csv">
+
+                        <small class="text-muted">
+                            Upload file like: Apple,Banana,Apple,Mango
+                        </small>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" name="remove_duplicates" id="remove_duplicates"
+                            <?php if (isset($_POST['remove_duplicates'])) echo "checked"; ?>>
+
+                        <label class="form-check-label" for="remove_duplicates">
+                            Remove duplicates automatically
+                        </label>
                     </div>
 
                     <button class="btn btn-primary" name="check">
@@ -177,7 +226,7 @@
 
             $desc = sortDescending($array);
 
-            ?>
+        ?>
 
             <div class="row mb-4">
 
@@ -227,13 +276,22 @@
                     </div>
                 </div>
 
+                <div class="col-md-3 mb-3">
+                    <div class="card stat-card bg-warning shadow">
+                        <div class="card-body text-center">
+                            <h5>Duplicate %</h5>
+                            <h2><?php echo duplicatePercentage($array); ?>%</h2>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <?php
 
             if ($search != "") {
 
-                ?>
+            ?>
 
                 <div class="alert <?php echo searchValue($array, $search) ? 'alert-success' : 'alert-danger'; ?>">
 
@@ -249,7 +307,7 @@
 
                 </div>
 
-                <?php
+            <?php
 
             }
 
@@ -287,7 +345,7 @@
 
                                     foreach ($array as $key => $value) {
 
-                                        ?>
+                                    ?>
 
                                         <tr>
 
@@ -297,7 +355,7 @@
 
                                         </tr>
 
-                                        <?php
+                                    <?php
 
                                     }
 
@@ -327,7 +385,7 @@
 
                             if (count($duplicates) > 0) {
 
-                                ?>
+                            ?>
 
                                 <table class="table table-bordered">
 
@@ -349,17 +407,21 @@
 
                                         foreach ($duplicates as $value => $count) {
 
-                                            ?>
+                                        ?>
 
                                             <tr>
 
-                                                <td><?php echo htmlspecialchars($value); ?></td>
+                                                <td>
+                                                    <span class="badge bg-danger">
+                                                        <?php echo htmlspecialchars($value); ?>
+                                                    </span>
+                                                </td>
 
                                                 <td><?php echo $count; ?></td>
 
                                             </tr>
 
-                                            <?php
+                                        <?php
 
                                         }
 
@@ -369,11 +431,11 @@
 
                                 </table>
 
-                                <?php
+                            <?php
 
                             } else {
 
-                                ?>
+                            ?>
 
                                 <div class="alert alert-success mb-0">
 
@@ -381,7 +443,7 @@
 
                                 </div>
 
-                                <?php
+                            <?php
 
                             }
 
@@ -578,7 +640,7 @@
 
             </div>
 
-            <?php
+        <?php
 
         }
 
